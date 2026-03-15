@@ -28,6 +28,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./logs:/app/logs  # Persist search/waitlist logs
+      - ./data:/app/data  # Persist product database (products.json)
     networks:
       - dealzoda_net
 

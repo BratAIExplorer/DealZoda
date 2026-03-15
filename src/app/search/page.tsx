@@ -2,13 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { SampleProduct, CATEGORIES, MARKETS, MARKET_LABELS, CURRENCY_SYMBOLS, SAMPLE_PRODUCTS, searchProducts } from '@/data/sample-products'
 import DealScoreBadge from '@/components/ui/DealScoreBadge'
+import { Product } from '@/lib/products-store'
 
-// ── Product Card ────────────────────────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const CATEGORIES = ['Phones','Laptops','Cameras','TVs','Audio','Hotels','Flights','Fashion','Appliances','Other']
+const MARKETS    = ['MY','IN','US','SG']
+const MARKET_LABELS: Record<string, string> = { MY: '🇲🇾 Malaysia', IN: '🇮🇳 India', US: '🇺🇸 USA', SG: '🇸🇬 Singapore' }
+const CURRENCY_SYMBOLS: Record<string, string> = { MYR: 'RM', INR: '₹', USD: '$', SGD: 'S$' }
+
+// ── Product Card ─────────────────────────────────────────────────────────────
 
 function ProductCard({ product, tracked, onTrack }: {
-  product:  SampleProduct
+  product:  Product
   tracked:  boolean
   onTrack:  (id: string) => void
 }) {
@@ -18,7 +25,7 @@ function ProductCard({ product, tracked, onTrack }: {
     <div className={`glass-card rounded-2xl p-5 relative overflow-hidden group transition-all duration-300
       ${product.isFakeDeal ? 'border-red-500/20' : ''}`}>
 
-      {/* Fake deal full-width banner */}
+      {/* Fake deal banner */}
       {product.isFakeDeal && (
         <div className="absolute top-0 left-0 right-0 px-4 py-2 flex items-center gap-2"
              style={{ background: 'rgba(239,68,68,0.12)', borderBottom: '1px solid rgba(239,68,68,0.25)' }}>
@@ -35,7 +42,7 @@ function ProductCard({ product, tracked, onTrack }: {
             <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-semibold"
                     style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', color: '#C084FC' }}>
-                {MARKET_LABELS[product.market]}
+                {MARKET_LABELS[product.market] ?? product.market}
               </span>
               <span className="text-xs px-2 py-0.5 rounded-full font-medium text-slate-500"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -91,7 +98,6 @@ function ProductCard({ product, tracked, onTrack }: {
 
         {/* Action row */}
         <div className="flex items-center gap-2">
-          {/* Track button */}
           <button
             onClick={() => onTrack(product.id)}
             className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200
@@ -103,11 +109,9 @@ function ProductCard({ product, tracked, onTrack }: {
             {tracked ? '✓ Tracking' : '+ Track This'}
           </button>
 
-          {/* View deal button */}
           {!product.isFakeDeal && (
             <a href={product.retailerUrl} target="_blank" rel="noopener noreferrer"
-               className="btn-yellow px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5"
-               onClick={() => logClick(product)}>
+               className="btn-yellow px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
               View Deal
               <span className="text-xs opacity-70">↗</span>
             </a>
@@ -127,7 +131,7 @@ function ProductCard({ product, tracked, onTrack }: {
             <span className="text-xs text-slate-600">
               Buy via DealZoda →{' '}
               <span className="text-yellow-400/80 font-medium">
-                earn RM {estimateCredits(product)} in Zoda Credits
+                earn {CURRENCY_SYMBOLS[product.currency] ?? ''}{estimateCredits(product)} in Zoda Credits
               </span>
             </span>
           </div>
@@ -137,35 +141,26 @@ function ProductCard({ product, tracked, onTrack }: {
   )
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-function estimateCredits(p: SampleProduct): string {
-  // Approximate: 5% affiliate commission × 20% share = 1% of price
+function estimateCredits(p: Product): string {
   const MYR_MAP: Record<string, number> = { MYR: 1, USD: 4.7, INR: 0.057, SGD: 3.5 }
   const rate = MYR_MAP[p.currency] ?? 1
-  const credits = p.currentPrice * rate * 0.01
-  return credits.toFixed(0)
+  return (p.currentPrice * rate * 0.01).toFixed(0)
 }
 
-function logClick(product: SampleProduct) {
-  // Log click for beta analytics
-  fetch('/api/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ event: 'click', productId: product.id, retailer: product.retailer }),
-  }).catch(() => {})
-}
-
-// ── Search Page ─────────────────────────────────────────────────────────────
+// ── Search Page ───────────────────────────────────────────────────────────────
 
 export default function SearchPage() {
   const [query,       setQuery]       = useState('')
-  const [market,      setMarket]      = useState<string>('')
-  const [category,    setCategory]    = useState<string>('')
+  const [market,      setMarket]      = useState('')
+  const [category,    setCategory]    = useState('')
   const [hideFakes,   setHideFakes]   = useState(false)
-  const [results,     setResults]     = useState<SampleProduct[]>([])
+  const [results,     setResults]     = useState<Product[]>([])
+  const [totalInDb,   setTotalInDb]   = useState(0)
   const [trackedIds,  setTrackedIds]  = useState<Set<string>>(new Set())
   const [hasSearched, setHasSearched] = useState(false)
+  const [loading,     setLoading]     = useState(false)
   const [trackAlert,  setTrackAlert]  = useState<string | null>(null)
 
   // Load tracked products from localStorage
@@ -176,21 +171,21 @@ export default function SearchPage() {
     } catch {}
   }, [])
 
-  // Debounced live search
-  const doSearch = useCallback(() => {
-    const r = searchProducts(query, {
-      market:       market   as 'MY' | 'IN' | 'US' | 'SG' | undefined || undefined,
-      category:     category as any || undefined,
-      realDealsOnly: hideFakes,
-    })
-    setResults(r)
+  // Fetch from API
+  const doSearch = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ q: query, market, category })
+      const r = await fetch(`/api/search?${params}`)
+      if (r.ok) {
+        const d = await r.json()
+        const filtered = hideFakes ? d.results.filter((p: Product) => !p.isFakeDeal) : d.results
+        setResults(filtered)
+        setTotalInDb(d.total)
+      }
+    } catch {}
     setHasSearched(true)
-
-    // Log to analytics API
-    if (query.length >= 2 || market || category) {
-      fetch(`/api/search?q=${encodeURIComponent(query)}&market=${market}&category=${category}`)
-        .catch(() => {})
-    }
+    setLoading(false)
   }, [query, market, category, hideFakes])
 
   useEffect(() => {
@@ -275,7 +270,6 @@ export default function SearchPage() {
 
           {/* Filters row */}
           <div className="flex items-center gap-2 mt-3 flex-wrap">
-            {/* Market filter */}
             <select
               value={market}
               onChange={e => setMarket(e.target.value)}
@@ -288,7 +282,6 @@ export default function SearchPage() {
               ))}
             </select>
 
-            {/* Category filter */}
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
@@ -301,7 +294,6 @@ export default function SearchPage() {
               ))}
             </select>
 
-            {/* Hide fakes toggle */}
             <button
               onClick={() => setHideFakes(!hideFakes)}
               className={`text-xs px-3 py-2 rounded-xl border transition-all font-medium
@@ -312,9 +304,8 @@ export default function SearchPage() {
               {hideFakes ? '✓' : ''} Hide Fake Deals
             </button>
 
-            {/* Results summary */}
             <span className="ml-auto text-xs text-slate-600 font-mono">
-              {results.length} results
+              {loading ? 'searching...' : `${results.length} results`}
               {fakeCount > 0 && !hideFakes && (
                 <span className="text-red-400/70 ml-1.5">· {fakeCount} fake{fakeCount > 1 ? 's' : ''} detected</span>
               )}
@@ -325,7 +316,7 @@ export default function SearchPage() {
 
       {/* Main content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* Tracked products summary */}
+        {/* Tracked summary */}
         {trackedIds.size > 0 && (
           <div className="glass-card rounded-xl px-4 py-3 mb-6 flex items-center gap-3"
                style={{ border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.05)' }}>
@@ -351,23 +342,35 @@ export default function SearchPage() {
               />
             ))}
           </div>
-        ) : hasSearched ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="font-display font-bold text-white text-2xl mb-2">
-              Nothing worth your money right now.
-            </h3>
-            <p className="text-slate-500 max-w-md mx-auto">
-              Zoda keeps watching. We'll alert you the moment something real shows up for "{query}".
-            </p>
-          </div>
+        ) : hasSearched && !loading ? (
+          totalInDb === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">📭</div>
+              <h3 className="font-display font-bold text-white text-2xl mb-2">
+                No products yet
+              </h3>
+              <p className="text-slate-500 max-w-md mx-auto">
+                Check back soon — deals are being added daily.
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="font-display font-bold text-white text-2xl mb-2">
+                Nothing worth your money right now.
+              </h3>
+              <p className="text-slate-500 max-w-md mx-auto">
+                Zoda keeps watching. We'll alert you the moment something real shows up for "{query}".
+              </p>
+            </div>
+          )
         ) : null}
 
         {/* Beta note */}
         <div className="mt-12 text-center">
           <div className="inline-block glass-card rounded-xl px-5 py-3 text-sm text-slate-600">
-            <span className="text-yellow-500/70">⚡ Beta mode</span> · {SAMPLE_PRODUCTS.length} products seeded manually ·
-            Live Apify scraping activates in Phase 2 · Products added daily
+            <span className="text-yellow-500/70">⚡ Beta mode</span> · {totalInDb} products in database ·
+            Live scraping activates in Phase 2 · Products added daily
           </div>
         </div>
       </div>
