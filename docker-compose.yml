@@ -12,8 +12,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dealzoda_web
-    ports:
-      - "3000:3000"
+    # No host port — nginx reaches it via internal Docker network as http://web:3000
+    expose:
+      - "3000"
     env_file:
       - .env
     environment:
@@ -75,9 +76,8 @@ services:
       - "8090:8090"   # DealZoda public port — avoids conflict with other VPS projects
     volumes:
       - ./infra/nginx/dealzoda.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./infra/nginx/ssl:/etc/nginx/ssl:ro           # SSL certs go here
-      - certbot_www:/var/www/certbot:ro               # Let's Encrypt verification
-      - certbot_conf:/etc/letsencrypt:ro              # SSL certificates
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
     depends_on:
       - web
     restart: unless-stopped
