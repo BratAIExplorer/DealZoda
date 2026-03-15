@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { SampleProduct, CATEGORIES, MARKETS, MARKET_LABELS, CURRENCY_SYMBOLS, searchProducts } from '@/data/sample-products'
+import { SampleProduct, CATEGORIES, MARKETS, MARKET_LABELS, CURRENCY_SYMBOLS, SAMPLE_PRODUCTS, searchProducts } from '@/data/sample-products'
 import DealScoreBadge from '@/components/ui/DealScoreBadge'
 
 // ── Product Card ────────────────────────────────────────────────────────────
@@ -366,8 +366,8 @@ export default function SearchPage() {
         {/* Beta note */}
         <div className="mt-12 text-center">
           <div className="inline-block glass-card rounded-xl px-5 py-3 text-sm text-slate-600">
-            <span className="text-yellow-500/70">⚡ Beta mode</span> · {results.length} products seeded manually ·
-            Live Apify scraping activates in Phase 2 · Data refreshes hourly
+            <span className="text-yellow-500/70">⚡ Beta mode</span> · {SAMPLE_PRODUCTS.length} products seeded manually ·
+            Live Apify scraping activates in Phase 2 · Products added daily
           </div>
         </div>
       </div>
