@@ -215,7 +215,7 @@ export default function SearchPage() {
         setTrackAlert(p?.name ?? null)
         setTimeout(() => setTrackAlert(null), 3000)
       }
-      localStorage.setItem('dz_tracked', JSON.stringify([...next]))
+      localStorage.setItem('dz_tracked', JSON.stringify(Array.from(next)))
       return next
     })
   }
