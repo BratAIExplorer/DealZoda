@@ -1,0 +1,335 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── CSS Custom Properties ────────────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --purple-primary:  #6B21A8;
+  --purple-bright:   #9333EA;
+  --purple-glow:     rgba(147, 51, 234, 0.35);
+  --yellow-primary:  #F59E0B;
+  --yellow-glow:     rgba(245, 158, 11, 0.3);
+  --navy-dark:       #0F0E2A;
+  --navy:            #1E1B4B;
+  --lavender:        #EDE9FE;
+
+  /* Surfaces */
+  --card-bg:         rgba(255, 255, 255, 0.04);
+  --card-border:     rgba(139, 92, 246, 0.18);
+  --card-border-hover: rgba(139, 92, 246, 0.45);
+
+  /* Score colors */
+  --score-excellent: #10B981;
+  --score-good:      #60A5FA;
+  --score-fake:      #EF4444;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--navy-dark);
+  color: #E2E8F0;
+  font-family: var(--font-body), 'DM Sans', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── CSS @property for animated score counter ─────────────────────────────── */
+@property --score-val {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+@property --score-pct {
+  syntax: '<integer>';
+  initial-value: 0;
+  inherits: false;
+}
+
+/* ── Animated Score Counter ───────────────────────────────────────────────── */
+.score-count {
+  --score-val: 0;
+  animation: countTo91 2s ease-out 0.8s forwards;
+  counter-reset: score var(--score-val);
+}
+
+.score-count::after {
+  content: counter(score);
+}
+
+@keyframes countTo91 {
+  from { --score-val: 0; }
+  to   { --score-val: 91; }
+}
+
+.score-count-savings {
+  --score-pct: 0;
+  animation: countTo22 2s ease-out 1s forwards;
+  counter-reset: savings var(--score-pct);
+}
+
+.score-count-savings::after {
+  content: counter(savings) '%';
+}
+
+@keyframes countTo22 {
+  from { --score-pct: 0; }
+  to   { --score-pct: 22; }
+}
+
+/* ── Glassmorphism Card ────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ── Dot Grid Background ──────────────────────────────────────────────────── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(139, 92, 246, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Gradient Text ────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #C084FC 0%, #9333EA 40%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-yellow {
+  background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow Blob ────────────────────────────────────────────────────────────── */
+.glow-blob-purple {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(109, 33, 168, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.glow-blob-yellow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+/* ── Scan Line Effect ─────────────────────────────────────────────────────── */
+.scan-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+  animation: scanLine 2.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scanLine {
+  0%   { top: -2px; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ── Noise Texture Overlay ────────────────────────────────────────────────── */
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* ── Section Reveal Animations ────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: revealUp 0.7s ease-out forwards;
+}
+
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.3s; }
+.reveal-delay-4 { animation-delay: 0.4s; }
+.reveal-delay-5 { animation-delay: 0.5s; }
+
+@keyframes revealUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Deal Score Arc ───────────────────────────────────────────────────────── */
+.score-arc-ring {
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 2s ease-out;
+}
+
+/* ── Fake Deal Strike ─────────────────────────────────────────────────────── */
+.fake-price {
+  position: relative;
+  color: rgba(239, 68, 68, 0.7);
+}
+
+.fake-price::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: #EF4444;
+  transform: rotate(-5deg);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--navy-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}
+
+/* ── Input Focus ──────────────────────────────────────────────────────────── */
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.5);
+}
+
+/* ── Yellow CTA Button ────────────────────────────────────────────────────── */
+.btn-yellow {
+  background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 100%);
+  color: #1E1B4B;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-yellow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.btn-yellow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45);
+}
+
+.btn-yellow:hover::after {
+  opacity: 1;
+}
+
+.btn-yellow:active {
+  transform: translateY(0);
+}
+
+/* ── Purple Outline Button ────────────────────────────────────────────────── */
+.btn-outline {
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  color: #C084FC;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  border-color: rgba(139, 92, 246, 0.8);
+  background: rgba(139, 92, 246, 0.1);
+  color: #E9D5FF;
+}
+
+/* ── Flag Ticker ──────────────────────────────────────────────────────────── */
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  animation: tickerScroll 20s linear infinite;
+  display: flex;
+  gap: 2rem;
+  width: max-content;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Layer Stack Animation ────────────────────────────────────────────────── */
+.layer-card {
+  transition: all 0.3s ease;
+}
+
+.layer-card:hover {
+  transform: translateX(8px);
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+/* ── Waitlist counter pulse ────────────────────────────────────────────────── */
+.counter-dot {
+  animation: counterPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes counterPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.3); }
+}
