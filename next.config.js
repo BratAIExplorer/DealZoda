@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // Required for Docker — creates self-contained build
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },

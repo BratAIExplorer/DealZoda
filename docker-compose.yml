@@ -1,0 +1,126 @@
+version: '3.8'
+
+# ── DealZoda Full Stack ────────────────────────────────────────────────────────
+# Runs all services on a single VPS (Hostinger KVM 2)
+# Start everything: docker-compose up -d
+# View logs:        docker-compose logs -f web
+# Stop:             docker-compose down
+
+services:
+
+  # ── Next.js Web App ──────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dealzoda_web
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs  # Persist search/waitlist logs
+    networks:
+      - dealzoda_net
+
+  # ── PostgreSQL Database ───────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: dealzoda_postgres
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"   # Remove this in production for security
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    restart: unless-stopped
+    networks:
+      - dealzoda_net
+
+  # ── Redis Cache + Queue ────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: dealzoda_redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"   # Remove this in production for security
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    restart: unless-stopped
+    networks:
+      - dealzoda_net
+
+  # ── Nginx Reverse Proxy + SSL ──────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: dealzoda_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/dealzoda.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro           # SSL certs go here
+      - certbot_www:/var/www/certbot:ro               # Let's Encrypt verification
+      - certbot_conf:/etc/letsencrypt:ro              # SSL certificates
+    depends_on:
+      - web
+    restart: unless-stopped
+    networks:
+      - dealzoda_net
+
+  # ── Certbot (SSL auto-renewal) ─────────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot
+    container_name: dealzoda_certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    # Run manually first: docker-compose run certbot certonly --webroot -w /var/www/certbot -d dealzoda.com -d www.dealzoda.com
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'
+    restart: unless-stopped
+
+  # ── Uptime Kuma (Health monitoring) ───────────────────────────────────────────
+  uptime:
+    image: louislam/uptime-kuma:1
+    container_name: dealzoda_uptime
+    volumes:
+      - uptime_data:/app/data
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    networks:
+      - dealzoda_net
+
+# ── Volumes ────────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  certbot_www:
+  certbot_conf:
+  uptime_data:
+
+# ── Network ────────────────────────────────────────────────────────────────────
+networks:
+  dealzoda_net:
+    driver: bridge

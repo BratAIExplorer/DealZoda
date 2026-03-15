@@ -58,3 +58,6 @@ prisma/*.db
 # Misc
 *.tmp
 doc_part2.txt
+
+# Beta analytics logs — contain user emails/searches, never commit
+logs/

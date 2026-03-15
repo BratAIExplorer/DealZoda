@@ -64,7 +64,7 @@ export default function RootLayout({
       lang="en"
       className={`${syne.variable} ${dmSans.variable} ${dmMono.variable} dark`}
     >
-      <body className="bg-navy-deeper text-slate-200 font-body antialiased">
+      <body className="bg-navy-deeper text-slate-200 font-body antialiased" suppressHydrationWarning>
         {children}
       </body>
     </html>
