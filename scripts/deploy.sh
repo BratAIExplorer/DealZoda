@@ -24,22 +24,22 @@ if [ "$FIRST_TIME" = true ]; then
     apt-get update && apt-get install -y docker-compose-plugin
 
     # Create app directory
-    mkdir -p /var/www/dealzoda
-    cd /var/www/dealzoda
+    mkdir -p /opt/dealzoda
+    cd /opt/dealzoda
 
     # Clone repo
     git clone https://github.com/BratAIExplorer/DealZoda.git .
 
     echo "✓ Docker installed"
-    echo "✓ Repo cloned to /var/www/dealzoda"
+    echo "✓ Repo cloned to /opt/dealzoda"
     echo ""
-    echo "► Next: copy your .env file to /var/www/dealzoda/.env"
+    echo "► Next: copy your .env file to /opt/dealzoda/.env"
     echo "  Then run: bash scripts/deploy.sh"
     exit 0
 fi
 
 # ── Standard deploy ───────────────────────────────────────────────────────────
-APP_DIR="/var/www/dealzoda"
+APP_DIR="/opt/dealzoda"
 cd "$APP_DIR"
 
 echo "► Pulling latest code..."
@@ -48,7 +48,7 @@ git pull origin main
 echo "► Checking .env file..."
 if [ ! -f ".env" ]; then
     echo "ERROR: .env file not found in $APP_DIR"
-    echo "Copy your .env file: scp .env root@76.13.179.32:/var/www/dealzoda/.env"
+    echo "Copy your .env file: scp .env root@76.13.179.32:/opt/dealzoda/.env"
     exit 1
 fi
 

@@ -81,7 +81,7 @@ npm run dev
 
 ```bash
 ssh deploy@76.13.179.32
-cd /var/www/dealzoda
+cd /opt/dealzoda
 git pull origin main
 docker-compose up -d --build
 ```
