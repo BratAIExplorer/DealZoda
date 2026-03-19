@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DealScoreBadge from '@/components/ui/DealScoreBadge'
@@ -176,7 +176,7 @@ function SkeletonCard() {
 
 // ── Search Page ───────────────────────────────────────────────────────────────
 
-export default function SearchPage() {
+function SearchPageInner() {
   const router         = useRouter()
   const searchParams   = useSearchParams()
   const initialQ       = searchParams.get('q') ?? ''
@@ -441,5 +441,13 @@ export default function SearchPage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchPageInner />
+    </Suspense>
   )
 }
